@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Chat</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1.0" />
+    <!-- <script src="http://cdn.peerjs.com/0.3/peer.js"></script> -->
+    <script src="bower_components/webcomponentsjs/webcomponents-lite.min.js"></script>
+    <link rel="import" href="bower_components/polymer/polymer.html" />
+    <link rel="import" href="bower_components/paper-header-panel/paper-header-panel.html" />
+    <link rel="import" href="bower_components/paper-toolbar/paper-toolbar.html" />
+    <link rel="import" href="bower_components/neon-animation/animations/scale-up-animation.html">
+    <link rel="import" href="bower_components/neon-animation/animations/fade-out-animation.html">
+    <link rel="import" href="bower_components/paper-dialog/paper-dialog.html" />
+    <link rel="import" href="bower_components/paper-dialog-scrollable/paper-dialog-scrollable.html" />
+    <link rel="import" href="bower_components/paper-styles/paper-styles.html" />
+    <link rel="import" href="bower_components/iron-icons/iron-icons.html" />
+    <link rel="import" href="bower_components/paper-icon-button/paper-icon-button.html" />
+    <!-- <link rel="import" href="../lib/paper&#45;elements/paper&#45;elements/paper&#45;elements.html" /> -->
+    <link rel="import" href="message-list.html" />
+    <link rel="import" href="submit-form.html" />
+    <script src="script.js"></script>
+  </head>
+  <body class="fullbleed layout vertical">
+    <dom-module id="x-app">
+      <style>
+        :host {
+          width: 100%;
+          height: 100%;
+          --paper-toolbar-background: #fff;
+          --paper-toolbar-color: #666;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+        }
+        :host ::content h1 {
+          font-weight: normal;
+          text-align: center;
+        }
+        /* :host ::content .paper-footer { */
+        /*   position: absolute; */
+        /*   bottom: 0; */
+        /*   width: 100%; */
+        /* } */
+        /* :host ::content submit-form { */
+        /*   position: absolute; */
+        /*   bottom: 0; */
+        /*   left: 0; */
+        /*   right: 0; */
+        /* } */
+      </style>
+      <template>
+        <paper-header-panel class="flex" mode="standard">
+          <paper-toolbar class="paper-header">
+            <h1 class="flex">LAIPLA!</h1>
+            <paper-icon-button icon="settings" on-click="settingsOpen"></paper-icon-button>
+          </paper-toolbar>
+          <div class="flex">
+            <message-list entries="{{entries}}" user-names="{{userNames}}" my-id="{{myId}}" on-message-change="messagesListChanged"></message-list>
+          </div>
+        </paper-header-panel>
+        <paper-toolbar>
+          <submit-form on-submit="sendMessage" disable="{{!isIdSeted}}"></submit-form>
+        </paper-toolbar>
+        <paper-dialog id="settings-dialog" modal entry-animation="scale-up-animation" exit-animation="fade-out-animation">
+          <h2>Settings</h2>
+          <paper-dialog-scrollable>
+            <paper-input value="{{myId}}" autofocus></paper-input>
+            <div>
+            </div>
+          </paper-dialog-scrollable>
+          <div class="buttons">
+            <template is="dom-if" if="{{isIdSeted}}">
+              <span>Hello, <span>{{myName}}</span></span>
+            </template>
+            <paper-button on-tap="settingsClose">OK</paper-button>
+          </div>
+        </paper-dialog>
+      </template>
+      <script>
+        var readyDeferred = Promise.defer();
+        Polymer({
+          is: 'x-app',
+          properties: {
+            firebase: {
+              type: Object,
+              value: new Firebase('https://laipla.firebaseio.com/')
+            },
+            entries: {
+              type: Object,
+              // observer: 'messagesChanged'
+            },
+            myName: {
+              type: String,
+              // observer: 'myNameChanged',
+              // value: localStorage.myId
+            },
+            myId: {
+              type: String,
+              observer: 'myIdChanged',
+              value: localStorage.myId
+            },
+            isIdSeted: {
+              type: Boolean,
+              value: false
+            },
+            myIdDeferred: {
+              type: Promise,
+              value: Promise.defer()
+            },
+          },
+          ready: function() {
+            var self = this;
+            self.userNames = [];
+            self.userNamesPromise = new Promise(function(resolve, reject) {
+              self.firebase.child('users').on('value', function(snapshot) {
+                var users = snapshot.val();
+                Object.keys(users).forEach(function(id) {
+                  self.userNames[id] = users[id].name;
+                  console.log(self.userNames);
+                });
+                console.log(self.userNames);
+                resolve(self.userNames);
+              });
+            });
+            Promise.all([self.userNamesPromise, self.myIdDeferred.promise]).then(function() {
+              self.firebase.child('messages').on('value', function(snapshot) {
+                console.log(snapshot.val());
+                // var _messages = [];
+                // var vals = snapshot.val();
+                // Object.keys(vals).forEach(function(index) {
+                //   var val = vals[index];
+                //   console.log("id", self.myId);
+                //   _messages.push({
+                //     type: 'message',
+                //     value: {
+                //       name: self.userNames[val.value.user_id],
+                //       message: val.value.message,
+                //       isMine: val.value.user_id == self.myId
+                //     }
+                //   });
+                // });
+                // self.messages = _messages;
+                self.entries = [snapshot.val()];
+              });
+            });
+            readyDeferred.resolve();
+          },
+          sendMessage: function(e) {
+            console.log(e.detail.message);
+            console.log(this.myName);
+            this.firebase.child('messages').child('value').child('entries').push({
+              type: 'message',
+              value: {
+                user_id: this.myId,
+                message: e.detail.message
+              }
+            });
+          },
+          // myNameChanged: function(value) {
+          //   localStorage.myName = value;
+          // },
+          myIdChanged: function(myId) {
+            var self = this;
+            localStorage.myId = myId;
+            if(myId != undefined && myId != '') self.firebase.child('users').child(myId).on('value', function(snapshot) {
+              console.log('myId:', myId);
+              if(snapshot.exists()) {
+                self.myName = snapshot.val().name;
+                localStorage.myId = myId;
+                self.isIdSeted = true;
+                self.myIdDeferred.resolve();
+              } else {
+                self.isIdSeted = false;
+              }
+            });
+          },
+          messagesListChanged: function() {
+            var self = this;
+            console.log(readyDeferred);
+            readyDeferred.promise.then(function() {
+              console.log(self.$$('message-list'));
+              self.$$('message-list').downToLatestMessages();
+            });
+          },
+          settingsOpen: function() {
+            this.$$('#settings-dialog').open();
+          },
+          settingsClose: function() {
+            this.$$('#settings-dialog').close();
+          }
+        });
+      </script>
+    </dom-module>
+    <x-app></x-app>
+  </body>
+</html>

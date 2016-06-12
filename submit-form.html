@@ -1,0 +1,46 @@
+<link rel="import" href="bower_components/paper-input/paper-input.html" />
+<link rel="import" href="bower_components/paper-ripple/paper-ripple.html" />
+<link rel="import" href="focus-input-tag.html" />
+<dom-module id="submit-form">
+  <style>
+    :host {
+      display: flex;
+      width: 100%;
+      align-items: center;
+    }
+    :host ::content paper-input {
+      --paper-input-container-color: #666;
+      --paper-input-container-focus-color: #666;
+      --paper-input-container-input-color: #666;
+    }
+    :host div.submit-button {
+      position: relative;
+    }
+  </style>
+  <template>
+    <paper-input value="{{message}}" class="flex" autofocus></paper-input>
+    <div class="submit-button">
+      <div>Submit</div>
+      <paper-ripple on-tap="submit" disabled="{{disable}}"></paper-ripple>
+    </div>
+  </template>
+  <script>
+    Polymer({
+      is: 'submit-form',
+      properties: {
+        message: {
+          type: String,
+          value: ''
+        },
+        disable: Boolean
+      },
+      submit: function(e) {
+        this.fire('submit', {
+          message: this.message
+        });
+        this.message = '';
+        focusInputTag(this.$$('paper-input').$.input);
+      }
+    });
+  </script>
+</dom-module>

@@ -1,0 +1,22 @@
+{
+  "name": "Laipla",
+  "version": "0.0.1",
+  "authors": [
+    "Yuki Ito <acomagu@gmail.com>"
+  ],
+  "description": "chat application",
+  "main": "index.html",
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "paper-elements": "https://github.com/PolymerElements/paper-elements.git#~1.0.1",
+    "polymer": "Polymer/polymer#1.0.0",
+    "firebase-element": "https://github.com/GoogleWebComponents/firebase-element.git#~1.0.1"
+  }
+}

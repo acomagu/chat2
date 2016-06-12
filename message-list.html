@@ -1,0 +1,91 @@
+<link rel="import" href="bower_components/firebase-element/firebase-collection.html" />
+<link rel="import" href="bower_components/iron-selector/iron-selector.html" />
+<link rel="import" href="x-message.html" />
+<dom-module id="message-list">
+  <style>
+:host {
+  border: 1px solid #aaa;
+  border-radius: 3px;
+}
+/* :host .iron-selector > div { */
+/*   background: #aaa; */
+/* } */
+  </style>
+  <template>
+    <!-- <iron&#45;selector on&#45;selected&#45;items&#45;changed="selectedItemsChanged"> -->
+    <iron-selector>
+      <template is="dom-repeat" items="{{entriesToArray(entries)}}">
+        <template is="dom-if" if="{{isMessageEntry(item)}}">
+          <x-message mine="{{isMine(item)}}">
+            <div class="name">{{getName(item)}}</div>
+            <div class="message">{{item.value.message}}</div>
+          </x-message>
+        </template>
+        <template is="dom-if" if="{{isTaleEntry(item)}}">
+          <span>Tale:</span>
+          <message-list entries="{{item.value.entries}}" my-id="{{myId}}" user-names="{{userNames}}"></message-list>
+        </template>
+      </template>
+    </iron-selector>
+  </template>
+  <script>
+    Polymer({
+      is: 'message-list',
+      properties: {
+        entries: {
+          type: Object,
+          notify: true,
+          value: function() {
+            return [];
+          },
+          observer: 'entriesChanged'
+        },
+        // selected: {
+        //   type: Boolean,
+        //   value: false
+        // },
+        myId: String,
+        userNames: Object
+      },
+      ready: function() {
+        var self = this;
+        window.addEventListener('resize', function() {
+          self.downToLatestMessages();
+        });
+      },
+      getName: function(entry) {
+        return this.userNames[entry.value.user_id];
+      },
+      isMine: function(entry) {
+        return entry.value.user_id == this.myId;
+      },
+      isMessageEntry(entry) {
+        console.log(entry);
+        return entry.type == 'message';
+      },
+      isTaleEntry(entry) {
+        console.log(entry);
+        return entry.type == 'tale';
+      },
+      downToLatestMessages: function() {
+        document.querySelector('#mainContainer').scrollTop = document.querySelector('#mainContainer').scrollHeight;
+      },
+      entriesChanged: function(entries) {
+        console.log('entryview:', entries);
+        this.fire('message-change');
+      },
+      // selectedItemsChanged: function(e) {
+      //   var selectedElement = e.detail.value[0];
+      //   console.log("selected", e);
+      //   selectedElement.selected = true;
+      // },
+      entriesToArray: function(entries) {
+        var result = [];
+        Object.keys(entries).forEach(function(index) {
+          result.push(entries[index]);
+        });
+        return result;
+      }
+    });
+  </script>
+</dom-module>

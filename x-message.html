@@ -1,0 +1,65 @@
+<dom-module id="x-message">
+  <style>
+:host ::content .message {
+  display: inline-block;
+  padding: 0.3em 0.5em;
+  margin: 1em;
+  border-radius: 0.3em;
+  background: #adf;
+}
+:host div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+:host div.mine {
+  align-items: flex-end;
+}
+:host div.mine ::content .name {
+  display: none;
+}
+:host ::content .mine .message {
+  background: #8af;
+}
+:host.iron-selected .message {
+  border: 1px solid orange;
+}
+/* :host div.selected ::content .message { */
+/* } */
+:host.iron-selected div ::content .message {
+  border: 1px solid red;
+}
+  </style>
+  <template>
+    <div class$="{{className}}">
+      <content></content>
+    </div>
+  </template>
+  <script>
+    Polymer({
+      is: 'x-message',
+      properties: {
+        mine: {
+          type: Boolean,
+          observer: 'mineChanged'
+        },
+        className: {
+          type: String,
+          value: ''
+        },
+        selected: {
+          type: Boolean,
+          value: false,
+          // observer: 'selectedChanged'
+        }
+      },
+      mineChanged: function(isMine) {
+        this.className += (isMine) ? ' mine' : '';
+      },
+      // selectedChanged: function(isSelected) {
+      //   console.log('xmsgselected', isSelected);
+      //   this.className += (isSelected) ? ' selected' : '';
+      // }
+    });
+  </script>
+</dom-module>
